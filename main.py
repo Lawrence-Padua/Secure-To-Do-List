@@ -86,15 +86,14 @@ def update_own_profile(name: str = None, phone_number: str = None,
     if phone_number:
         current_user.phone_number = phone_number
     db.commit()
-    db.refresh(current_user)
     return current_user
 
 @app.post("/users/me/change-password")
 def change_password(current_password: str, new_password: str,
                     db: Session = Depends(get_db),
                     current_user: models.User = Depends(auth.get_current_user)):
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    from pwdlib import PasswordHash
+    pwd_context = PasswordHash.recommended()
     if not pwd_context.verify(current_password, current_user.password_hash):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     current_user.password_hash = pwd_context.hash(new_password)
@@ -159,3 +158,5 @@ def admin_delete_user(user_id: int, db: Session = Depends(get_db), admin: models
     db.delete(user)
     db.commit()
     return {"message": "User deleted successfully"}
+
+
